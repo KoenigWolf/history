@@ -49,7 +49,7 @@ export default async function HomePage() {
 
   return (
     <PageContainer>
-      <Breadcrumbs />
+      <Breadcrumbs availableYears={years} />
 
       <PageHeader
         title={t.page.homeTitle}

@@ -110,9 +110,16 @@ export default async function YearPage({
   const hasMonths = months.length > 0;
   const hasNoData = !hasMajorEvents && !hasMonths;
 
+  // 全年のリストを取得（ドロップダウン用）
+  const allYears = await getAvailableYears();
+
   return (
     <PageContainer>
-      <Breadcrumbs currentYear={year} />
+      <Breadcrumbs
+        currentYear={year}
+        availableYears={allYears}
+        availableMonths={months}
+      />
 
       <PageHeader
         title={t.page.yearTitle(year)}

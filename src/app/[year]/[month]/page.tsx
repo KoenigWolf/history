@@ -95,8 +95,12 @@ export default async function MonthPage({
   const year = yearResult.data;
   const month = monthResult.data;
 
-  // データ取得
-  const monthData = await getMonthData(year, month);
+  // データ取得（並列）
+  const [monthData, allYears, allMonths] = await Promise.all([
+    getMonthData(year, month),
+    getAvailableYears(),
+    getAvailableMonths(year),
+  ]);
 
   if (!monthData) {
     notFound();
@@ -107,7 +111,12 @@ export default async function MonthPage({
 
   return (
     <PageContainer>
-      <Breadcrumbs currentYear={year} currentMonth={month} />
+      <Breadcrumbs
+        currentYear={year}
+        currentMonth={month}
+        availableYears={allYears}
+        availableMonths={allMonths}
+      />
 
       <PageHeader
         title={t.page.monthTitle(year, month)}
