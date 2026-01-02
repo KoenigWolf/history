@@ -1,0 +1,18 @@
+month: 1
+year: 1868
+events:
+  - date: "1868-01-03"
+    title: "王政復古の大号令"
+    category: "政治・経済"
+    description: "明治天皇により王政復古の大号令が発せられ、江戸幕府の廃止と新政府の樹立が宣言された。これにより約260年続いた徳川幕府による統治が終わりを告げた。"
+    related_countries: ["日本"]
+    sources:
+      - "明治維新史"
+
+  - date: "1868-01-27"
+    title: "鳥羽・伏見の戦い"
+    category: "戦争・紛争"
+    description: "旧幕府軍と新政府軍の間で戊辰戦争の緒戦となる戦闘が勃発。新政府軍が勝利し、徳川慶喜は江戸へ退却した。"
+    related_countries: ["日本"]
+    sources:
+      - "戊辰戦争史"
