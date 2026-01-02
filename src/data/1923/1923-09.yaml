@@ -1,0 +1,19 @@
+month: 9
+year: 1923
+events:
+  - date: "1923-09-01"
+    title: "関東大震災"
+    category: "災害"
+    description: "相模湾を震源とするマグニチュード7.9の大地震が発生。東京・横浜を中心に約10万5千人が死亡・行方不明となった。火災による被害が特に甚大であった。"
+    related_countries: ["日本"]
+    sources:
+      - "関東大震災報告書"
+      - "気象庁記録"
+
+  - date: "1923-09-02"
+    title: "戒厳令発令"
+    category: "政治・経済"
+    description: "関東大震災の混乱に対処するため、東京府と神奈川県に戒厳令が発令された。"
+    related_countries: ["日本"]
+    sources:
+      - "日本近代史年表"
