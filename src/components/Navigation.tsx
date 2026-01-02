@@ -3,6 +3,14 @@
  */
 
 import Link from 'next/link';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 interface NavigationProps {
   currentYear?: number;
@@ -11,32 +19,40 @@ interface NavigationProps {
 
 export function Navigation({ currentYear, currentMonth }: NavigationProps) {
   return (
-    <nav className="mb-8 flex items-center gap-4 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-      <Link
-        href="/"
-        className="text-lg font-semibold text-zinc-900 hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
-      >
-        世界史年表
-      </Link>
-      {currentYear && (
-        <>
-          <span className="text-zinc-400 dark:text-zinc-600">/</span>
-          <Link
-            href={`/${currentYear}`}
-            className="text-lg font-semibold text-zinc-900 hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
-          >
-            {currentYear}年
-          </Link>
-        </>
-      )}
-      {currentMonth && (
-        <>
-          <span className="text-zinc-400 dark:text-zinc-600">/</span>
-          <span className="text-lg font-semibold text-zinc-600 dark:text-zinc-400">
-            {currentMonth}月
-          </span>
-        </>
-      )}
-    </nav>
+    <Breadcrumb className="mb-8">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          {currentYear ? (
+            <BreadcrumbLink asChild>
+              <Link href="/">世界史年表</Link>
+            </BreadcrumbLink>
+          ) : (
+            <BreadcrumbPage>世界史年表</BreadcrumbPage>
+          )}
+        </BreadcrumbItem>
+        {currentYear && (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              {currentMonth ? (
+                <BreadcrumbLink asChild>
+                  <Link href={`/${currentYear}`}>{currentYear}年</Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>{currentYear}年</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+          </>
+        )}
+        {currentMonth && (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{currentMonth}月</BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

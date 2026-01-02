@@ -3,6 +3,16 @@
  */
 
 import type { HistoryEvent } from '@/types/history';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardAction,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface EventCardProps {
   event: HistoryEvent;
@@ -10,57 +20,62 @@ interface EventCardProps {
 
 export function EventCard({ event }: EventCardProps) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            {event.date}
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader>
+        <CardDescription className="text-sm font-medium">
+          {event.date}
+        </CardDescription>
+        <CardTitle className="text-xl">{event.title}</CardTitle>
+        <CardAction>
+          <Badge variant="secondary">{event.category}</Badge>
+        </CardAction>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <p className="text-muted-foreground leading-relaxed">
+          {event.description}
+        </p>
+
+        {event.related_countries.length > 0 && (
+          <div className="space-y-2">
+            <Separator />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                関連国・地域
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {event.related_countries.map((country, index) => (
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+                  >
+                    {country}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
-          <h3 className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            {event.title}
-          </h3>
-        </div>
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          {event.category}
-        </span>
-      </div>
-      
-      <p className="mb-4 text-zinc-700 dark:text-zinc-300">
-        {event.description}
-      </p>
-      
-      {event.related_countries.length > 0 && (
-        <div className="mb-4">
-          <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-            関連国・地域
+        )}
+
+        {event.sources && event.sources.length > 0 && (
+          <div className="space-y-2">
+            <Separator />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                参考文献
+              </p>
+              <ul className="space-y-1">
+                {event.sources.map((source, index) => (
+                  <li key={index} className="text-xs text-muted-foreground">
+                    • {source}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {event.related_countries.map((country, index) => (
-              <span
-                key={index}
-                className="rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-              >
-                {country}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {event.sources && event.sources.length > 0 && (
-        <div>
-          <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-            参考文献
-          </div>
-          <ul className="space-y-1">
-            {event.sources.map((source, index) => (
-              <li key={index} className="text-xs text-zinc-600 dark:text-zinc-400">
-                • {source}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
