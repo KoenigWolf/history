@@ -1,0 +1,10 @@
+month: 6
+year: 1989
+events:
+  - date: "1989-06-04"
+    title: "天安門事件"
+    category: "政治・経済"
+    description: "中国北京の天安門広場で民主化を求めるデモ隊に対し、人民解放軍が武力鎮圧を行った。死傷者数は不明だが、多くの市民が犠牲となった。"
+    related_countries: ["中国"]
+    sources:
+      - "国際報道記録"
