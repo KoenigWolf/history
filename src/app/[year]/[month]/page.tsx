@@ -1,88 +1,67 @@
 /**
- * 月別詳細ページ
- * 指定した年・月の出来事を詳細表示
+ * 月別ページ
+ * @module app/[year]/[month]/page
  */
 
 import { notFound } from 'next/navigation';
-import { getMonthData, getAvailableMonths, getAvailableYears } from '@/lib/data-loader';
-import { Navigation } from '@/components/Navigation';
-import { EventCard } from '@/components/EventCard';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { FileText } from 'lucide-react';
+import type { Metadata } from 'next';
 
-interface MonthPageProps {
-  params: Promise<{ year: string; month: string }>;
+import type { Year, Month } from '@/domain/types';
+import { t, getMonthName } from '@/config/i18n';
+import { parseYear, parseMonth, createYear, createMonth } from '@/domain/validation/validators';
+import {
+  getAvailableYears,
+  getAvailableMonths,
+  getMonthData,
+} from '@/services/history-service';
+import {
+  PageContainer,
+  PageHeader,
+  Breadcrumbs,
+  EventCard,
+  EmptyState,
+} from '@/components/features';
+
+/** ページパラメータの型 */
+interface MonthPageParams {
+  readonly year: string;
+  readonly month: string;
 }
 
-const monthNames = [
-  '1月', '2月', '3月', '4月', '5月', '6月',
-  '7月', '8月', '9月', '10月', '11月', '12月'
-];
-
-export default async function MonthPage({ params }: MonthPageProps) {
-  const { year: yearStr, month: monthStr } = await params;
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-
-  // 年・月が有効な数値でない場合は404
-  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-    notFound();
-  }
-
-  // 月別データを取得
-  const monthData = await getMonthData(year, month);
-
-  // データが存在しない場合は404
-  if (!monthData) {
-    notFound();
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <Navigation currentYear={year} currentMonth={month} />
-
-        <header className="mb-10">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              {year}年 {monthNames[month - 1]}
-            </h1>
-            <Badge variant="secondary" className="text-sm">
-              {monthData.events.length}件
-            </Badge>
-          </div>
-        </header>
-
-        {monthData.events.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="size-12 text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground text-center">
-                この月のデータはまだ登録されていません。
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {monthData.events.map((event, index) => (
-              <EventCard key={index} event={event} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+/** ページプロパティ */
+interface MonthPageProps {
+  readonly params: Promise<MonthPageParams>;
 }
 
 /**
- * 静的生成用のパラメータ生成
+ * 動的メタデータ生成
  */
-export async function generateStaticParams() {
-  const years = await getAvailableYears();
+export async function generateMetadata({
+  params,
+}: MonthPageProps): Promise<Metadata> {
+  const { year: yearStr, month: monthStr } = await params;
 
-  // 各年の利用可能な月を取得して組み合わせを生成
-  const params: Array<{ year: string; month: string }> = [];
+  const yearResult = parseYear(yearStr);
+  const monthResult = parseMonth(monthStr);
+
+  if (!yearResult.success || !monthResult.success) {
+    return { title: t.error.notFound };
+  }
+
+  const title = t.page.monthTitle(yearResult.data, monthResult.data);
+
+  return {
+    title,
+    description: `${yearResult.data}年${getMonthName(monthResult.data)}の歴史的出来事`,
+  };
+}
+
+/**
+ * 静的生成パラメータ
+ */
+export async function generateStaticParams(): Promise<MonthPageParams[]> {
+  const years = await getAvailableYears();
+  const params: MonthPageParams[] = [];
 
   for (const year of years) {
     const months = await getAvailableMonths(year);
@@ -95,4 +74,61 @@ export async function generateStaticParams() {
   }
 
   return params;
+}
+
+/**
+ * 月別ページコンポーネント
+ */
+export default async function MonthPage({
+  params,
+}: MonthPageProps) {
+  const { year: yearStr, month: monthStr } = await params;
+
+  // パラメータバリデーション
+  const yearResult = parseYear(yearStr);
+  const monthResult = parseMonth(monthStr);
+
+  if (!yearResult.success || !monthResult.success) {
+    notFound();
+  }
+
+  const year = yearResult.data;
+  const month = monthResult.data;
+
+  // データ取得
+  const monthData = await getMonthData(year, month);
+
+  if (!monthData) {
+    notFound();
+  }
+
+  const eventCount = monthData.events.length;
+  const hasEvents = eventCount > 0;
+
+  return (
+    <PageContainer>
+      <Breadcrumbs currentYear={year} currentMonth={month} />
+
+      <PageHeader
+        title={t.page.monthTitle(year, month)}
+        badge={t.stats.eventCount(eventCount)}
+      />
+
+      {hasEvents ? (
+        <div
+          className="space-y-6"
+          role="feed"
+          aria-label={`${year}年${getMonthName(month)}の出来事`}
+        >
+          {monthData.events.map((event, index) => (
+            <article key={`${event.date}-${index}`}>
+              <EventCard event={event} />
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState variant="noMonthData" />
+      )}
+    </PageContainer>
+  );
 }
