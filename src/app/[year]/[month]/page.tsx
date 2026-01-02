@@ -4,9 +4,12 @@
  */
 
 import { notFound } from 'next/navigation';
-import { getMonthData, getAvailableMonths } from '@/lib/data-loader';
+import { getMonthData, getAvailableMonths, getAvailableYears } from '@/lib/data-loader';
 import { Navigation } from '@/components/Navigation';
 import { EventCard } from '@/components/EventCard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { FileText } from 'lucide-react';
 
 interface MonthPageProps {
   params: Promise<{ year: string; month: string }>;
@@ -36,25 +39,30 @@ export default async function MonthPage({ params }: MonthPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <Navigation currentYear={year} currentMonth={month} />
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-            {year}年 {monthNames[month - 1]}
-          </h1>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            {monthData.events.length}件の出来事
-          </p>
-        </div>
+        <header className="mb-10">
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+              {year}年 {monthNames[month - 1]}
+            </h1>
+            <Badge variant="secondary" className="text-sm">
+              {monthData.events.length}件
+            </Badge>
+          </div>
+        </header>
 
         {monthData.events.length === 0 ? (
-          <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              この月のデータはまだ登録されていません。
-            </p>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="size-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground text-center">
+                この月のデータはまだ登録されていません。
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-6">
             {monthData.events.map((event, index) => (
@@ -71,13 +79,11 @@ export default async function MonthPage({ params }: MonthPageProps) {
  * 静的生成用のパラメータ生成
  */
 export async function generateStaticParams() {
-  // 利用可能な年を取得
-  const { getAvailableYears } = await import('@/lib/data-loader');
   const years = await getAvailableYears();
-  
+
   // 各年の利用可能な月を取得して組み合わせを生成
   const params: Array<{ year: string; month: string }> = [];
-  
+
   for (const year of years) {
     const months = await getAvailableMonths(year);
     for (const month of months) {
@@ -87,6 +93,6 @@ export async function generateStaticParams() {
       });
     }
   }
-  
+
   return params;
 }

@@ -8,6 +8,9 @@ import { getYearData, getAvailableMonths, getAllMonthsForYear, getAvailableYears
 import { Navigation } from '@/components/Navigation';
 import { MonthLink } from '@/components/MonthLink';
 import { EventCard } from '@/components/EventCard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Star, FileText } from 'lucide-react';
 
 interface YearPageProps {
   params: Promise<{ year: string }>;
@@ -40,42 +43,58 @@ export default async function YearPage({ params }: YearPageProps) {
     monthEventCounts.set(monthData.month, monthData.events.length);
   });
 
+  // 総イベント数
+  const totalEvents = monthDataList.reduce((sum, m) => sum + m.events.length, 0);
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <Navigation currentYear={year} />
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-            {year}年
-          </h1>
+        <header className="mb-10">
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+              {year}年
+            </h1>
+            {totalEvents > 0 && (
+              <Badge variant="secondary" className="text-sm">
+                {totalEvents}件
+              </Badge>
+            )}
+          </div>
           {yearData?.summary && (
-            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
+            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
               {yearData.summary}
             </p>
           )}
-        </div>
+        </header>
 
         {/* 主要イベントの表示 */}
         {yearData?.majorEvents && yearData.majorEvents.length > 0 && (
-          <div className="mb-12">
-            <h2 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-              主要イベント
-            </h2>
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-6">
+              <Star className="size-5 text-amber-500" />
+              <h2 className="text-2xl font-semibold text-foreground">
+                主要イベント
+              </h2>
+            </div>
             <div className="grid gap-6 md:grid-cols-2">
               {yearData.majorEvents.map((event, index) => (
                 <EventCard key={index} event={event} />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* 月別リンク */}
         {months.length > 0 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-              月別詳細
-            </h2>
+          <section>
+            <div className="flex items-center gap-2 mb-6">
+              <Calendar className="size-5 text-muted-foreground" />
+              <h2 className="text-2xl font-semibold text-foreground">
+                月別詳細
+              </h2>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {months.map(month => (
                 <MonthLink
@@ -86,15 +105,18 @@ export default async function YearPage({ params }: YearPageProps) {
                 />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {months.length === 0 && !yearData?.majorEvents && (
-          <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              この年のデータはまだ登録されていません。
-            </p>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="size-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground text-center">
+                この年のデータはまだ登録されていません。
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
