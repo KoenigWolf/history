@@ -1,0 +1,11 @@
+# 2024年の概要
+year: 2024
+summary: "21世紀の現代。日本では令和6年。"
+majorEvents:
+  - date: "2024-01-01"
+    title: "能登半島地震発生"
+    category: "災害"
+    description: "石川県能登半島で最大震度7の地震が発生。"
+    related_countries: ["日本"]
+    sources:
+      - "気象庁"
