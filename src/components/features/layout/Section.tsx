@@ -9,8 +9,6 @@ import type { ReactNode } from 'react';
 export interface SectionProps {
   /** セクションタイトル */
   readonly title: string;
-  /** タイトルの前に表示するアイコン（任意） */
-  readonly icon?: ReactNode;
   /** セクションコンテンツ */
   readonly children: ReactNode;
   /** 追加のクラス名 */
@@ -23,11 +21,10 @@ export interface SectionProps {
 
 /**
  * セクションコンポーネント
- * コンテンツを論理的にグループ化して表示
+ * シンプルなタイポグラフィベースのセクション
  */
 export function Section({
   title,
-  icon,
   children,
   className = 'mb-12',
   titleAs: TitleTag = 'h2',
@@ -35,21 +32,14 @@ export function Section({
 }: SectionProps) {
   return (
     <section className={className} aria-labelledby={`section-${title}`}>
-      <div className="flex items-center gap-2 mb-6">
-        {icon && (
-          <span className="flex-shrink-0" aria-hidden="true">
-            {icon}
-          </span>
-        )}
-        <TitleTag
-          id={`section-${title}`}
-          className="text-2xl font-semibold text-foreground"
-        >
-          {title}
-        </TitleTag>
-      </div>
+      <TitleTag
+        id={`section-${title}`}
+        className="text-lg font-medium text-foreground mb-6"
+      >
+        {title}
+      </TitleTag>
       {description && (
-        <p className="text-muted-foreground mb-6">{description}</p>
+        <p className="text-muted-foreground mb-6 -mt-4">{description}</p>
       )}
       {children}
     </section>

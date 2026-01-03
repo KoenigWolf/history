@@ -4,7 +4,6 @@
  */
 
 import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
 
 /** ページヘッダーのプロパティ */
 export interface PageHeaderProps {
@@ -22,29 +21,27 @@ export interface PageHeaderProps {
 
 /**
  * ページヘッダーコンポーネント
- * 各ページの見出しを統一的に表示
+ * シンプルなタイポグラフィベースのヘッダー
  */
 export function PageHeader({
   title,
   description,
   badge,
   children,
-  className = 'mb-10',
+  className = 'mb-12',
 }: PageHeaderProps) {
   return (
     <header className={className}>
-      <div className="flex items-center gap-3 mb-2 flex-wrap">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          {title}
-        </h1>
-        {badge && (
-          <Badge variant="secondary" className="text-sm">
-            {badge}
-          </Badge>
-        )}
-      </div>
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        {title}
+      </h1>
+      {badge && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          {badge}
+        </p>
+      )}
       {description && (
-        <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
+        <p className="mt-3 text-muted-foreground leading-relaxed max-w-2xl">
           {description}
         </p>
       )}
