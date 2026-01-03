@@ -9,51 +9,139 @@ import { join } from 'path';
 import { parse } from 'yaml';
 
 import { DATA_DIR_PATH, FILE_PATTERNS } from '@/config/constants';
-import type { Year, Month, HistoryEvent, MonthData, YearData, Result } from '@/domain/types';
-import { DataLoadError, DataParseError, NotFoundError } from '@/domain/errors';
+import type { Year, Month, HistoryEvent, MonthData, YearData } from '@/domain/types';
 import { monthDataSchema, yearDataSchema } from '@/domain/validation/schemas';
-import { isValidYear, isValidMonth, createYear, createMonth, createDateString } from '@/domain/validation/validators';
+import { isValidYear, isValidMonth, createDateString } from '@/domain/validation/validators';
 import { withCache, cacheKeys } from '@/infrastructure/cache';
+import { logger } from '@/infrastructure/logger';
+import {
+  isSafeString,
+  sanitizeString,
+  isSafeStringArray,
+  sanitizeStringArray,
+  isRecord,
+  isRecordArray,
+} from '@/infrastructure/security';
 
 /** データディレクトリの絶対パス */
 const DATA_DIR = join(process.cwd(), ...DATA_DIR_PATH);
 
 /**
- * YAMLデータを正規化してドメイン型に変換
+ * 型安全なプロパティ取得
  */
-function normalizeHistoryEvent(raw: Record<string, unknown>): HistoryEvent {
+function getStringProp(obj: Record<string, unknown>, key: string): string {
+  const value = obj[key];
+  if (!isSafeString(value)) return '';
+  return sanitizeString(value);
+}
+
+/**
+ * 型安全な文字列配列プロパティ取得
+ */
+function getStringArrayProp(obj: Record<string, unknown>, key: string): string[] {
+  const value = obj[key];
+  if (isSafeStringArray(value)) return value;
+  return sanitizeStringArray(value);
+}
+
+/**
+ * 型安全なオプショナル文字列プロパティ取得
+ */
+function getOptionalStringProp(obj: Record<string, unknown>, key: string): string | undefined {
+  const value = obj[key];
+  if (value === undefined || value === null) return undefined;
+  if (!isSafeString(value)) return undefined;
+  return sanitizeString(value);
+}
+
+/**
+ * YAMLデータを正規化してドメイン型に変換
+ * 型安全性を強化
+ */
+function normalizeHistoryEvent(raw: unknown): HistoryEvent | null {
+  if (!isRecord(raw)) {
+    logger.warn('Invalid event data: not an object');
+    return null;
+  }
+
+  const date = getStringProp(raw, 'date');
+  const title = getStringProp(raw, 'title');
+  const category = getStringProp(raw, 'category');
+  const description = getStringProp(raw, 'description');
+
+  // 必須フィールドの検証
+  if (!date || !title || !category || !description) {
+    logger.warn('Invalid event data: missing required fields', {
+      hasDate: !!date,
+      hasTitle: !!title,
+      hasCategory: !!category,
+      hasDescription: !!description,
+    });
+    return null;
+  }
+
   return {
-    date: createDateString(raw.date as string),
-    title: raw.title as string,
-    category: raw.category as string,
-    description: raw.description as string,
-    relatedCountries: (raw.related_countries as string[]) ?? [],
-    sources: raw.sources as string[] | undefined,
+    date: createDateString(date),
+    title,
+    category,
+    description,
+    relatedCountries: getStringArrayProp(raw, 'related_countries'),
+    sources: getOptionalStringProp(raw, 'sources')
+      ? getStringArrayProp(raw, 'sources')
+      : undefined,
   };
 }
 
 /**
  * 月別データを正規化
  */
-function normalizeMonthData(raw: Record<string, unknown>, year: Year, month: Month): MonthData {
-  const events = (raw.events as Record<string, unknown>[]) ?? [];
+function normalizeMonthData(raw: unknown, year: Year, month: Month): MonthData | null {
+  if (!isRecord(raw)) {
+    logger.warn('Invalid month data: not an object');
+    return null;
+  }
+
+  const eventsRaw = raw.events;
+  const events: HistoryEvent[] = [];
+
+  if (isRecordArray(eventsRaw)) {
+    for (const eventRaw of eventsRaw) {
+      const event = normalizeHistoryEvent(eventRaw);
+      if (event) events.push(event);
+    }
+  }
+
   return {
     year,
     month,
-    events: events.map(normalizeHistoryEvent),
+    events,
   };
 }
 
 /**
  * 年別データを正規化
  */
-function normalizeYearData(raw: Record<string, unknown>, year: Year): YearData {
+function normalizeYearData(raw: unknown, year: Year): YearData | null {
+  if (!isRecord(raw)) {
+    logger.warn('Invalid year data: not an object');
+    return null;
+  }
+
+  const majorEventsRaw = raw.majorEvents;
+  let majorEvents: HistoryEvent[] | undefined;
+
+  if (isRecordArray(majorEventsRaw)) {
+    majorEvents = [];
+    for (const eventRaw of majorEventsRaw) {
+      const event = normalizeHistoryEvent(eventRaw);
+      if (event) majorEvents.push(event);
+    }
+  }
+
   return {
     year,
-    summary: raw.summary as string | undefined,
-    majorEvents: raw.majorEvents
-      ? (raw.majorEvents as Record<string, unknown>[]).map(normalizeHistoryEvent)
-      : undefined,
+    summary: getOptionalStringProp(raw, 'summary'),
+    majorEvents: majorEvents?.length ? majorEvents : undefined,
   };
 }
 
@@ -91,9 +179,11 @@ export class FileSystemHistoryRepository implements IHistoryRepository {
           .map((entry) => parseInt(entry.name, 10))
           .filter(isValidYear)
           .sort((a, b) => a - b);
+
+        logger.debug('Loaded available years', { count: years.length });
         return years;
       } catch (error) {
-        console.error('Failed to read years directory:', error);
+        logger.error('Failed to read years directory', error);
         return [];
       }
     });
@@ -120,9 +210,10 @@ export class FileSystemHistoryRepository implements IHistoryRepository {
           .filter((month): month is Month => month !== null && isValidMonth(month))
           .sort((a, b) => a - b);
 
+        logger.debug('Loaded available months', { year, count: months.length });
         return months;
       } catch (error) {
-        console.error(`Failed to read months for year ${year}:`, error);
+        logger.error('Failed to read months directory', error, { year });
         return [];
       }
     });
@@ -136,21 +227,27 @@ export class FileSystemHistoryRepository implements IHistoryRepository {
       try {
         const filePath = join(this.dataDir, year.toString(), FILE_PATTERNS.YEAR_SUMMARY(year));
         const fileContent = await readFile(filePath, 'utf-8');
-        const rawData = parse(fileContent) as Record<string, unknown>;
+        const rawData = parse(fileContent);
 
-        // バリデーション（ログのみ、エラーは投げない）
+        // スキーマバリデーション
         const validation = yearDataSchema.safeParse(rawData);
         if (!validation.success) {
-          console.warn(`Year data validation warning for ${year}:`, validation.error.issues);
+          logger.warn('Year data validation failed', {
+            year,
+            issues: validation.error.issues.length,
+          });
         }
 
-        return normalizeYearData(rawData, year);
+        const normalized = normalizeYearData(rawData, year);
+        if (normalized) {
+          logger.debug('Loaded year data', { year });
+        }
+        return normalized;
       } catch (error) {
-        // ファイルが存在しない場合はnullを返す
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           return null;
         }
-        console.warn(`Failed to load year data for ${year}:`, error);
+        logger.error('Failed to load year data', error, { year });
         return null;
       }
     });
@@ -168,20 +265,28 @@ export class FileSystemHistoryRepository implements IHistoryRepository {
           FILE_PATTERNS.MONTH_DATA(year, month)
         );
         const fileContent = await readFile(filePath, 'utf-8');
-        const rawData = parse(fileContent) as Record<string, unknown>;
+        const rawData = parse(fileContent);
 
-        // バリデーション（ログのみ）
+        // スキーマバリデーション
         const validation = monthDataSchema.safeParse(rawData);
         if (!validation.success) {
-          console.warn(`Month data validation warning for ${year}-${month}:`, validation.error.issues);
+          logger.warn('Month data validation failed', {
+            year,
+            month,
+            issues: validation.error.issues.length,
+          });
         }
 
-        return normalizeMonthData(rawData, year, month);
+        const normalized = normalizeMonthData(rawData, year, month);
+        if (normalized) {
+          logger.debug('Loaded month data', { year, month, eventCount: normalized.events.length });
+        }
+        return normalized;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           return null;
         }
-        console.warn(`Failed to load month data for ${year}-${month}:`, error);
+        logger.error('Failed to load month data', error, { year, month });
         return null;
       }
     });
