@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Home, ChevronRight, Calendar, Clock, ChevronDown } from 'lucide-react';
 import type { Year, Month } from '@/domain/types';
-import { t, getMonthName, MONTH_NAMES } from '@/config/i18n';
+import { t, getMonthName } from '@/config/i18n';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
