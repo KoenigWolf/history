@@ -6,9 +6,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import type { Year, Month } from '@/domain/types';
 import { t, getMonthName } from '@/config/i18n';
-import { parseYear, parseMonth, createYear, createMonth } from '@/domain/validation/validators';
+import { parseYear, parseMonth } from '@/domain/validation/validators';
 import {
   getAvailableYears,
   getAvailableMonths,
@@ -84,7 +83,6 @@ export default async function MonthPage({
 }: MonthPageProps) {
   const { year: yearStr, month: monthStr } = await params;
 
-  // パラメータバリデーション
   const yearResult = parseYear(yearStr);
   const monthResult = parseMonth(monthStr);
 
@@ -95,7 +93,6 @@ export default async function MonthPage({
   const year = yearResult.data;
   const month = monthResult.data;
 
-  // データ取得（並列）
   const [monthData, allYears, allMonths] = await Promise.all([
     getMonthData(year, month),
     getAvailableYears(),
@@ -125,14 +122,12 @@ export default async function MonthPage({
 
       {hasEvents ? (
         <div
-          className="space-y-6"
+          className="divide-y divide-border"
           role="feed"
           aria-label={`${year}年${getMonthName(month)}の出来事`}
         >
           {monthData.events.map((event, index) => (
-            <article key={`${event.date}-${index}`}>
-              <EventCard event={event} />
-            </article>
+            <EventCard key={`${event.date}-${index}`} event={event} />
           ))}
         </div>
       ) : (

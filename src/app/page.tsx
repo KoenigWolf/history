@@ -3,7 +3,6 @@
  * @module app/page
  */
 
-import { BookOpen } from 'lucide-react';
 import type { Year } from '@/domain/types';
 import { t } from '@/config/i18n';
 import { getAvailableYears, getAllEventsForYear } from '@/services/history-service';
@@ -39,11 +38,9 @@ async function fetchYearEventCounts(years: Year[]): Promise<YearEventCount[]> {
  * 利用可能な年の一覧を表示
  */
 export default async function HomePage() {
-  // データ取得
   const years = await getAvailableYears();
   const yearEventCounts = await fetchYearEventCounts(years);
 
-  // 統計計算
   const totalEvents = yearEventCounts.reduce((sum, { count }) => sum + count, 0);
   const hasData = years.length > 0;
 
@@ -53,22 +50,13 @@ export default async function HomePage() {
 
       <PageHeader
         title={t.page.homeTitle}
+        badge={totalEvents > 0 ? t.stats.totalEvents(totalEvents) : undefined}
         description={t.page.homeDescription}
-      >
-        {totalEvents > 0 && (
-          <div
-            className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
-            aria-live="polite"
-          >
-            <BookOpen className="size-4" aria-hidden="true" />
-            <span>{t.stats.totalEvents(totalEvents)}</span>
-          </div>
-        )}
-      </PageHeader>
+      />
 
       {hasData ? (
         <div
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className="divide-y divide-border"
           role="list"
           aria-label="年一覧"
         >

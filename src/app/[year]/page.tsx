@@ -5,11 +5,10 @@
 
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Calendar, Star } from 'lucide-react';
 
 import type { Year, Month } from '@/domain/types';
 import { t } from '@/config/i18n';
-import { parseYear, parseMonth } from '@/domain/validation/validators';
+import { parseYear } from '@/domain/validation/validators';
 import {
   getAvailableYears,
   getYearData,
@@ -73,7 +72,6 @@ export default async function YearPage({
 }: YearPageProps) {
   const { year: yearStr } = await params;
 
-  // パラメータバリデーション
   const yearResult = parseYear(yearStr);
   if (!yearResult.success) {
     notFound();
@@ -81,25 +79,22 @@ export default async function YearPage({
 
   const year = yearResult.data;
 
-  // データ取得（並列）
-  const [yearData, months, monthDataList] = await Promise.all([
+  const [yearData, months, monthDataList, allYears] = await Promise.all([
     getYearData(year),
     getAvailableMonths(year),
     getAllMonthsForYear(year),
+    getAvailableYears(),
   ]);
 
-  // データが存在しない場合は404
   if (!yearData && months.length === 0) {
     notFound();
   }
 
-  // 月別イベント数マップ
   const monthEventCounts = new Map<Month, number>();
   monthDataList.forEach((monthData) => {
     monthEventCounts.set(monthData.month, monthData.events.length);
   });
 
-  // 総イベント数
   const totalEvents = monthDataList.reduce(
     (sum, m) => sum + m.events.length,
     0
@@ -109,9 +104,6 @@ export default async function YearPage({
     yearData?.majorEvents && yearData.majorEvents.length > 0;
   const hasMonths = months.length > 0;
   const hasNoData = !hasMajorEvents && !hasMonths;
-
-  // 全年のリストを取得（ドロップダウン用）
-  const allYears = await getAvailableYears();
 
   return (
     <PageContainer>
@@ -129,14 +121,11 @@ export default async function YearPage({
 
       {/* 主要イベント */}
       {hasMajorEvents && (
-        <Section
-          title={t.section.majorEvents}
-          icon={<Star className="size-5 text-amber-500" />}
-        >
-          <div className="grid gap-6 md:grid-cols-2" role="list">
+        <Section title={t.section.majorEvents}>
+          <div className="space-y-0" role="list">
             {yearData.majorEvents!.map((event, index) => (
               <div key={`${event.date}-${index}`} role="listitem">
-                <EventCard event={event} />
+                <EventCard event={event} compact />
               </div>
             ))}
           </div>
@@ -147,11 +136,10 @@ export default async function YearPage({
       {hasMonths && (
         <Section
           title={t.section.monthlyDetails}
-          icon={<Calendar className="size-5 text-muted-foreground" />}
           className={hasMajorEvents ? '' : 'mb-12'}
         >
           <div
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             role="list"
             aria-label="月一覧"
           >
@@ -168,7 +156,6 @@ export default async function YearPage({
         </Section>
       )}
 
-      {/* 空状態 */}
       {hasNoData && <EmptyState variant="noYearData" />}
     </PageContainer>
   );
