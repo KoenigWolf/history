@@ -139,18 +139,17 @@ export default async function YearPage({
           className={hasMajorEvents ? '' : 'mb-12'}
         >
           <div
-            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            className="divide-y divide-border"
             role="list"
             aria-label="月一覧"
           >
             {months.map((month) => (
-              <div key={month} role="listitem">
-                <MonthCard
-                  year={year}
-                  month={month}
-                  eventCount={monthEventCounts.get(month)}
-                />
-              </div>
+              <MonthCard
+                key={month}
+                year={year}
+                month={month}
+                eventCount={monthEventCounts.get(month)}
+              />
             ))}
           </div>
         </Section>

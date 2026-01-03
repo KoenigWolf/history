@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 月カードコンポーネント
+ * 月リンクコンポーネント
  * @module components/features/history/MonthCard
  */
 
@@ -24,8 +24,8 @@ export interface MonthCardProps {
 }
 
 /**
- * 月カードコンポーネント
- * クリーンなグリッドアイテムデザイン
+ * 月リンクコンポーネント
+ * タイムライン形式のシンプルなリンク
  */
 function MonthCardComponent({
   year,
@@ -40,51 +40,34 @@ function MonthCardComponent({
     <Link
       href={`/${year}/${month}`}
       className={cn(
-        'group block',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 rounded-sm',
+        'group flex items-center justify-between py-3',
+        'border-b border-border last:border-b-0',
+        'hover:bg-muted/30 transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className
       )}
       aria-label={t.a11y.navigateToMonth(year, month)}
     >
-      <article
-        className={cn(
-          'relative p-5',
-          'border border-border rounded-lg',
-          'transition-all duration-200',
-          'hover:border-foreground/20 hover:bg-muted/20'
+      <span className="text-foreground group-hover:text-foreground/80">
+        {monthName}
+      </span>
+
+      <div className="flex items-center gap-3">
+        {hasEvents && (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {eventCount}件
+          </span>
         )}
-      >
-        <div className="flex items-start justify-between">
-          {/* 月 */}
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-              {month}月
-            </p>
-            <h4 className="text-lg font-medium text-foreground">
-              {monthName}
-            </h4>
-          </div>
-
-          {/* イベント数 */}
-          {hasEvents && (
-            <span className="text-xs text-muted-foreground tabular-nums pt-0.5">
-              {eventCount}
-            </span>
-          )}
-        </div>
-
-        {/* ホバー時の矢印 */}
         <span
           className={cn(
-            'absolute bottom-4 right-4',
-            'text-muted-foreground/0 transition-all duration-200',
-            'group-hover:text-muted-foreground'
+            'text-muted-foreground transition-transform duration-200',
+            'group-hover:translate-x-1'
           )}
           aria-hidden="true"
         >
           →
         </span>
-      </article>
+      </div>
     </Link>
   );
 }
